@@ -1,7 +1,9 @@
 const FavoriteMoviesModel = require('../models/FavoriteMovies.model');
 const UserModel = require('../models/Users.model');
+const MoviesModel = require('../models/Movies.model');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const axios = require("axios");
 
  
 exports.getAllFavoriteMovies = async (req, res) => {
@@ -82,28 +84,57 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 exports.createFavoriteMovie = async (req, res) => {
 	const { 
 		movie_id,
-		user_id
-	} = req.body;
-	// if(user_id && property_id){
-	// 	await FavoriteMoviesModel.find({property_id:req.body.property_id,user_id:req.body.user_id})
-	// 	.populate('property_id') 
-	// 	.then(async data=>{ 
-	// 		if(data.length>0){ 
-    //             FavoriteMoviesModel.findByIdAndDelete({ _id: data[0]._id })
-    //             .then((data) => res.json({ status: 200,message:"Removed from shortlist", data }))
-    //             .catch((err) => res.json({ status: false, message: err }));
-	// 		}else{ 
-	// 			const newUserFavorite = await new FavoriteMoviesModel({
-	// 				property_id,
-	// 				user_id
-	// 			});
-	// 			newUserFavorite
-	// 				.save()
-	// 				.then((response) => res.json(response))
-	// 				.catch((err) => res.json(err));
-	// 		}
-	// 	})
-	// }
+        user_id
+	} = req.body;  
+
+	if(user_id && movie_id){
+		await FavoriteMoviesModel.find({tmdb_id:req.body.movie_id,user_id:req.body.user_id}) 
+		.then(async data=>{ 
+			if(data.length>0){ 
+				// res.json({message:"exists"})
+                FavoriteMoviesModel.findByIdAndDelete({ _id:data[0]._id })
+                .then((data) => res.json({ status: 200,message:"Removed from shortlist", data }))
+                .catch((err) => res.json({ status: false, message: err }));
+			}else{ 
+				axios.get(`https://api.themoviedb.org/3/movie/${movie_id}?api_key=14bc3e16a8c419d4790d6b5dffe899fa&language=en-US`)
+				.then(async res=>{
+					const newMovie= await new MoviesModel({
+						backdrop_path:res.data.backdrop_path,
+						poster_path:res.data.poster_path,
+						budget:res.data.budget,
+						genres:res.data.genres,
+						tmdb_id:movie_id,
+						title:res.data.title,
+						overview:res.data.overview,
+						release_date:res.data.release_date,
+						runtime:res.data.runtime,
+						status:res.data.status,
+						tagline:res.data.tagline,
+						vote_average:res.data.vote_average
+					})
+					newMovie.save()
+					.then(async response=>{
+						const newFavorite = await new FavoriteMoviesModel({
+							movie_id:response._id,
+							user_id:user_id
+						})
+						newFavorite
+							.save()
+							.then(response =>
+								res.json({
+									status: 200,
+									message: 'New favorite movie created successfully.',
+									response,
+								})
+							
+							)
+							.catch((error) => console.log(error));
+					}).catch(err=>res.json(err))
+
+				}).catch(err=>res.json(err))
+			}
+		}).catch(err=>res.json(err))
+	}
 
 };
 

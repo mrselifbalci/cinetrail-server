@@ -2,38 +2,18 @@ const mongoose = require('mongoose')
 const MoviesModel = require('../models/Movies.model')
 
 exports.getAllMovies = async (req, res, next) => { 
-	const{page=1,limit=10}=req.query
-	const total = await MoviesModel.find().countDocuments();
-	await MoviesModel.aggregate( 
-	[ 
-		 {$sort:{createdAt: -1} },
-		 {$skip:(page - 1) * limit},
-		 {$limit:limit*1}, 
-		 {
-            $lookup:{ 
-				from:'properties',
-				localField:"_id",
-				foreignField:'city_id',
-				as:'property_count'
-			}, 
-			
-		}, 
-		{
-			$addFields: { property_count: { $size: "$property_count" } }  
-		},
-		{
-			$project:{
-				name:true,universities:true,student_life:true,image_url:true,property_count:true,
-                createdAt:true,updatedAt:true
-			} 
-		},
-	
-	],
-	(err,response)=>{
-	if(err)res.json(err);
-	const pages = limit === undefined ? 1 : Math.ceil(total / limit);
-	res.json({ total,pages, status: 200, response })
-}) 
+	try {
+		const { page = 1, limit } = req.query;
+		const response = await MoviesModel.find()
+			.limit(limit * 1)
+			.skip((page - 1) * limit) 
+			.sort({ createdAt: -1 })
+		const total = await MoviesModel.find().countDocuments();
+		const pages = limit === undefined ? 1 : Math.ceil(total / limit);
+		res.json({ total, pages, status: 200, response });
+	} catch (error) {
+		res.json({ status: 404, message: err });
+	}
 }
 
 exports.create = async (req, res) => {
