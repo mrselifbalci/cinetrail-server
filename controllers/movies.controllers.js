@@ -19,23 +19,7 @@ exports.getAllMovies = async (req, res, next) => {
 exports.create = async (req, res) => {
 
 	console.log(req.body)
-    // const newMovie = await new MoviesModel({
-    //     name: req.body.name,
-	// 	universities:req.body.universities,
-	// 	student_life:req.body.student_life,
-	// 	image_url: req.body.image_url,
-    // })
-
-    // newMovie.save((err, data) => {
-    //     if(err) {
-    //         res.status(500).json({message: err})
-    //     } else {
-    //         res.status(200).json({
-    //             message: 'new movie created',
-    //             data
-    //         })
-    //     }
-    // })
+    
 
 }
 
@@ -43,35 +27,7 @@ exports.create = async (req, res) => {
 
 exports.getSingleMovie = async (req, res) => {
 
-	await MoviesModel.aggregate(
-		[
-			{
-				$match: { _id: mongoose.Types.ObjectId(req.params.id) }
-			},
-			{$sort:{createdAt: -1} },
-			{
-			   $lookup:{
-				   from:'properties',
-				   localField:"_id",
-				   foreignField:'city_id',
-				   as:'property_count'
-			   }, 
-			   
-		   }, 
-		   {
-			   $addFields: { property_count: { $size: "$property_count" } }  
-		   },
-		   {
-			   $project:{
-				   name:true,universities:true,student_life:true,image_url:true,property_count:true,
-				   createdAt:true,updatedAt:true
-			   } 
-		   },
-		],
-		(err,data)=>{ 
-			if(err)res.json(err);
-			res.json({data})
-		})
+console.log(req.body)
 }
 
 

@@ -7,6 +7,6 @@ router.get('/favoriteMovies/user/:userid', favoriteMoviesControllers.getFavorite
 router.post('/favoriteMovies/search', favoriteMoviesControllers.checkExistence);
 router.post('/favoriteMovies', favoriteMoviesControllers.createFavoriteMovie);
 router.patch('/favoriteMovies/:id', favoriteMoviesControllers.updateFavoriteMovie);
-router.delete('/favoriteMovies/:id', favoriteMoviesControllers.deleteFavoriteMovie); 
+router.delete('/favoriteMovies/:user_id/:tmdb_id', favoriteMoviesControllers.deleteFavoriteMovie); 
  
 module.exports = router;      

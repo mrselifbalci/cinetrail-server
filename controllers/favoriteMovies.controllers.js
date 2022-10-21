@@ -25,7 +25,7 @@ exports.getAllFavoriteMovies = async (req, res) => {
 		},   
 		{
 			$project:{
-				property_id:true,user_id:true,createdAt:true,updatedAt:true
+				movie_id:true,user_id:true,tmdb_id:true,createdAt:true,updatedAt:true
 			}
 		},
 	],
@@ -52,21 +52,31 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 			}, 
             {
             $lookup:{ 
-				from:'properties',
-				let:{"property_id":"$property_id"},
+				from:'movies',
+				let:{"movie_id":"$movie_id"},
 				pipeline:[
-					{$match:{$expr:{$eq:["$_id","$$property_id"]}}},
+					{$match:{$expr:{$eq:["$_id","$$movie_id"]}}},
                     {$project:{
-                        property_type:1,bedroom_count:1,bathroom_count:1,
-                        rent:1,adress:1,images:1,furnished:1
+						backdrop_path:1,
+						poster_path:1,
+						budget:1,
+						genres:1,
+						tmdb_id:1,
+						title:1,
+						overview:1,
+						release_date:1,
+						runtime:1,
+						status:1,
+						tagline:1,
+						vote_average:1
 					}},
 				],
-				as:'property_details' 
+				as:'movie' 
 			} 
 		    },
 			{
 				$project:{
-					property_details:true,_id:false
+					movie:true,_id:false
 				}
 			},
 		],
@@ -82,27 +92,40 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 
 
 exports.createFavoriteMovie = async (req, res) => {
-	const { 
-		movie_id,
-        user_id
-	} = req.body;  
-
+	const { movie_id, user_id} = req.body;  
 	if(user_id && movie_id){
 		await FavoriteMoviesModel.find({tmdb_id:req.body.movie_id,user_id:req.body.user_id}) 
 		.then(async data=>{ 
 			if(data.length>0){ 
-				// res.json({message:"exists"})
-                FavoriteMoviesModel.findByIdAndDelete({ _id:data[0]._id })
-                .then((data) => res.json({ status: 200,message:"Removed from shortlist", data }))
-                .catch((err) => res.json({ status: false, message: err }));
+				res.json({status:409,message:"This user already has this movie in the favorites list."})
 			}else{ 
-				axios.get(`https://api.themoviedb.org/3/movie/${movie_id}?api_key=14bc3e16a8c419d4790d6b5dffe899fa&language=en-US`)
-				.then(async response=>{
+				await MoviesModel.find({tmdb_id:req.body.movie_id})
+				.then( async movie=>{
+					if(movie.length>0){
+						const newFavorite = await new FavoriteMoviesModel({
+							movie_id:movie[0]._id,
+							user_id:user_id,
+							tmdb_id:movie_id
+						})
+						newFavorite
+							.save()
+							.then(favorite =>
+								res.json({
+									status: 200,
+									message: 'New favorite movie created successfully.',
+									favorite,
+								})
+							
+							)
+							.catch((error) => res.json(err));
+					}else{
+						axios.get(`https://api.themoviedb.org/3/movie/${movie_id}?api_key=${process.env.API_KEY}&language=en-US`)
+				    .then(async response=>{
 					const newMovie= await new MoviesModel({
 						backdrop_path:response.data.backdrop_path,
 						poster_path:response.data.poster_path,
 						budget:response.data.budget,
-						genres:response.data.genresponse,
+						genres:response.data.genres,
 						tmdb_id:movie_id,
 						title:response.data.title,
 						overview:response.data.overview,
@@ -116,7 +139,8 @@ exports.createFavoriteMovie = async (req, res) => {
 					.then(async movie=>{
 						const newFavorite = await new FavoriteMoviesModel({
 							movie_id:movie._id,
-							user_id:user_id
+							user_id:user_id,
+							tmdb_id:movie_id
 						})
 						newFavorite
 							.save()
@@ -134,6 +158,8 @@ exports.createFavoriteMovie = async (req, res) => {
 
 				})
 				.catch(err=>res.json(err))
+					}
+				}).catch((error) => movie.json(error));
 			}
 		}).catch(err=>res.json(err))
 	}
@@ -142,9 +168,8 @@ exports.createFavoriteMovie = async (req, res) => {
 
  
 exports.checkExistence = async (req, res, next) => {
-	console.log(req.body)
 			try {
-				const response = await FavoriteMoviesModel.findOne({ "user_id": req.body.user_id,"property_id":req.body.property_id} )
+				const response = await FavoriteMoviesModel.findOne({ "user_id": req.body.user_id,"tmdb_id":req.body.tmdb_id} )
 				res.json(response); 
 			} catch (error) {
 				next({ status: 404, message: error });
@@ -156,13 +181,13 @@ exports.checkExistence = async (req, res, next) => {
 exports.updateFavoriteMovie = async (req, res) => {
 	await FavoriteMoviesModel.findByIdAndUpdate({ _id: req.params.id }, { $set: req.body })
 		.then((data) => res.json({ message: 'Successfully updated', data }))
-		.catch((err) => res.json({ message: err }));
+		.catch((err) => res.json({ message: err })); 
 };
 
 
-exports.deleteFavoriteMovie = async (req, res) => {
-	await FavoriteMoviesModel.findByIdAndDelete({ _id: req.params.id })
-	.then((data) => res.json(data))
-	.catch((err) => res.json({ message: err }));
+exports.deleteFavoriteMovie = async (req, res) => { 
+	await FavoriteMoviesModel.findOneAndDelete({tmdb_id:req.params.tmdb_id,user_id:req.params.user_id}) 
+	.then(response=>res.json({status:200,message:"removed from favorites"}))
+	.catch((err) => res.json({ err })); 
 };
-
+ 
