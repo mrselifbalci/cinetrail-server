@@ -97,41 +97,43 @@ exports.createFavoriteMovie = async (req, res) => {
                 .catch((err) => res.json({ status: false, message: err }));
 			}else{ 
 				axios.get(`https://api.themoviedb.org/3/movie/${movie_id}?api_key=14bc3e16a8c419d4790d6b5dffe899fa&language=en-US`)
-				.then(async res=>{
+				.then(async response=>{
 					const newMovie= await new MoviesModel({
-						backdrop_path:res.data.backdrop_path,
-						poster_path:res.data.poster_path,
-						budget:res.data.budget,
-						genres:res.data.genres,
+						backdrop_path:response.data.backdrop_path,
+						poster_path:response.data.poster_path,
+						budget:response.data.budget,
+						genres:response.data.genresponse,
 						tmdb_id:movie_id,
-						title:res.data.title,
-						overview:res.data.overview,
-						release_date:res.data.release_date,
-						runtime:res.data.runtime,
-						status:res.data.status,
-						tagline:res.data.tagline,
-						vote_average:res.data.vote_average
+						title:response.data.title,
+						overview:response.data.overview,
+						release_date:response.data.release_date,
+						runtime:response.data.runtime,
+						status:response.data.status,
+						tagline:response.data.tagline,
+						vote_average:response.data.vote_average
 					})
 					newMovie.save()
-					.then(async response=>{
+					.then(async movie=>{
 						const newFavorite = await new FavoriteMoviesModel({
-							movie_id:response._id,
+							movie_id:movie._id,
 							user_id:user_id
 						})
 						newFavorite
 							.save()
-							.then(response =>
+							.then(favorite =>
 								res.json({
 									status: 200,
 									message: 'New favorite movie created successfully.',
-									response,
+									favorite,
 								})
 							
 							)
-							.catch((error) => console.log(error));
-					}).catch(err=>res.json(err))
+							.catch((error) => res.json(err));
+					})
+					.catch(err=>res.json(err))
 
-				}).catch(err=>res.json(err))
+				})
+				.catch(err=>res.json(err))
 			}
 		}).catch(err=>res.json(err))
 	}
