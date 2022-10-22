@@ -73,10 +73,12 @@ exports.createUser = async (req, res) => {
 				username,
 				email,
 				password,
-				image_url,
-				is_active,
-				role
+				image_url
 			} = req.body;
+			if(!username || !email || !password){
+				res.json({status:400,message:"Missing information."})
+				return;
+			}
 			await UsersModel.countDocuments({ "email": email },async function(err,count){
 				if(count>0){
                   res.json({status:409,message:"This email exists!"})
@@ -86,12 +88,10 @@ exports.createUser = async (req, res) => {
 			
 					const newUser = await new UsersModel({
 						username,
-						email,
+						email, 
 						password:hashedPassword,
-						image_url,
-						is_active,
-						role
-					});
+						image_url
+					}); 
 					newUser
 						.save()
 						.then(async response=>{
@@ -108,7 +108,7 @@ exports.createUser = async (req, res) => {
 									}, 
 									{
 										$project:{
-											username:true,email:true,password:true,
+											username:true,email:true,
 											is_active:true,createdAt:true,updatedAt:true,image_url:true
 										}
 									},
@@ -139,7 +139,7 @@ exports.login = async (req, res) => {
 					email: data.email,
 					image_url: data.image_url, 
 					is_active: data.is_active, 
-					id: data._id,
+					_id: data._id,
 					token: token
 				})
 			} else {

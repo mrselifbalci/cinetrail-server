@@ -92,6 +92,7 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 
 
 exports.createFavoriteMovie = async (req, res) => {
+	console.log(req.body)
 	const { movie_id, user_id} = req.body;  
 	if(user_id && movie_id){
 		await FavoriteMoviesModel.find({tmdb_id:req.body.movie_id,user_id:req.body.user_id}) 
@@ -158,10 +159,12 @@ exports.createFavoriteMovie = async (req, res) => {
 
 				})
 				.catch(err=>res.json(err))
-					}
+				}
 				}).catch((error) => movie.json(error));
 			}
 		}).catch(err=>res.json(err))
+	}else{
+		res.json({status:400,message:"Provide both the movie id and user id"})
 	}
 
 };
@@ -170,7 +173,8 @@ exports.createFavoriteMovie = async (req, res) => {
 exports.checkExistence = async (req, res, next) => {
 			try {
 				const response = await FavoriteMoviesModel.findOne({ "user_id": req.body.user_id,"tmdb_id":req.body.tmdb_id} )
-				res.json(response); 
+				res.json(response)
+				 
 			} catch (error) {
 				next({ status: 404, message: error });
 			}   
@@ -184,7 +188,7 @@ exports.updateFavoriteMovie = async (req, res) => {
 		.catch((err) => res.json({ message: err })); 
 };
 
-
+ 
 exports.deleteFavoriteMovie = async (req, res) => { 
 	await FavoriteMoviesModel.findOneAndDelete({tmdb_id:req.params.tmdb_id,user_id:req.params.user_id}) 
 	.then(response=>res.json({status:200,message:"removed from favorites"}))
