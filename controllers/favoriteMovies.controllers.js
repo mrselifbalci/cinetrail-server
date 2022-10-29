@@ -39,7 +39,7 @@ exports.getAllFavoriteMovies = async (req, res) => {
 
   
 exports.getFavoriteMoviesByUserId = async (req, res) => {  
-	if(!req.params.userid){
+	if(!req.params.userid || req.params.userid===undefined){
 		return;
 	}
 	await FavoriteMoviesModel.aggregate(
