@@ -41,53 +41,55 @@ exports.getAllFavoriteMovies = async (req, res) => {
 exports.getFavoriteMoviesByUserId = async (req, res) => {  
 	if(!req.params.userid || req.params.userid===undefined){
 		return;
-	}
-	await FavoriteMoviesModel.aggregate(
-		[
-			{
-				$match: { user_id: mongoose.Types.ObjectId(req.params.userid) }
-			},
-			{
-				$sort:
+	}else{
+		await FavoriteMoviesModel.aggregate(
+			[
 				{
-				 createdAt: -1
+					$match: { user_id: mongoose.Types.ObjectId(req.params.userid) }
+				},
+				{
+					$sort:
+					{
+					 createdAt: -1
+					} 
+				}, 
+				{
+				$lookup:{ 
+					from:'movies',
+					let:{"movie_id":"$movie_id"},
+					pipeline:[
+						{$match:{$expr:{$eq:["$_id","$$movie_id"]}}},
+						{$project:{
+							backdrop_path:1,
+	
+							poster_path:1,
+							budget:1,
+							genres:1,
+							tmdb_id:1,
+							title:1,
+							overview:1,
+							release_date:1,
+							runtime:1,
+							status:1,
+							tagline:1,
+							vote_average:1
+						}},
+					],
+					as:'movie' 
 				} 
-			}, 
-            {
-            $lookup:{ 
-				from:'movies',
-				let:{"movie_id":"$movie_id"},
-				pipeline:[
-					{$match:{$expr:{$eq:["$_id","$$movie_id"]}}},
-                    {$project:{
-						backdrop_path:1,
-
-						poster_path:1,
-						budget:1,
-						genres:1,
-						tmdb_id:1,
-						title:1,
-						overview:1,
-						release_date:1,
-						runtime:1,
-						status:1,
-						tagline:1,
-						vote_average:1
-					}},
-				],
-				as:'movie' 
-			} 
-		    },
-			{
-				$project:{
-					movie:true,_id:false
-				}
-			},
-		],
-		(err,favorites)=>{ 
-		if(err)res.json(err);
-		res.json({favorites})
-	}) 
+				},
+				{
+					$project:{
+						movie:true,_id:false
+					}
+				},
+			],
+			(err,favorites)=>{ 
+			if(err)res.json(err);
+			res.json({favorites})
+		}) 
+	}
+	
 
 };
 
