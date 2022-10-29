@@ -38,7 +38,10 @@ exports.getAllFavoriteMovies = async (req, res) => {
 
 
   
-exports.getFavoriteMoviesByUserId = async (req, res) => { 
+exports.getFavoriteMoviesByUserId = async (req, res) => {  
+	if(!req.params.userid){
+		return;
+	}
 	await FavoriteMoviesModel.aggregate(
 		[
 			{
@@ -58,7 +61,7 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 					{$match:{$expr:{$eq:["$_id","$$movie_id"]}}},
                     {$project:{
 						backdrop_path:1,
-						
+
 						poster_path:1,
 						budget:1,
 						genres:1,
