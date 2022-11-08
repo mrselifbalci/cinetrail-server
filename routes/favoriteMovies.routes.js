@@ -9,4 +9,4 @@ router.post('/favoriteMovies', favoriteMoviesControllers.createFavoriteMovie);
 router.patch('/favoriteMovies/:id', favoriteMoviesControllers.updateFavoriteMovie);
 router.delete('/favoriteMovies/:user_id/:tmdb_id', favoriteMoviesControllers.deleteFavoriteMovie); 
  
-module.exports = router;       
+module.exports = router;        
