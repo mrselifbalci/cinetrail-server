@@ -54,8 +54,8 @@ exports.getFavoriteMoviesByUserId = async (req, res) => {
 					 createdAt: -1
 					} 
 				}, 
-				{
-				$lookup:{ 
+				{ 
+				$lookup:{  
 					from:'movies',
 					let:{"movie_id":"$movie_id"},
 					pipeline:[

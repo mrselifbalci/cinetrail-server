@@ -136,9 +136,7 @@ exports.login = async (req, res) => {
 				res.json({ 
 					status: true,
 					username: data.username,
-					email: data.email,
 					image_url: data.image_url, 
-					is_active: data.is_active, 
 					_id: data._id,
 					token: token
 				})
